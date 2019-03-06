@@ -14,10 +14,6 @@ function createSequenceControls(map,attributes){
     $('#panel').append('<button class="skip" id="reverse">Previous Election</button>');
     $('#panel').append('<button class="skip" id="forward">Next Election</button>');
 
-/*    //replace button content with images
-    $('#reverse').html('<img src="img/previous.png">');
-    $('#forward').html('<img src="img/next.png">');	
-	 */
 	 
     $('.skip').click(function(){
         //get the old index value
@@ -42,6 +38,7 @@ function createSequenceControls(map,attributes){
     });
 };
 
+//create function to update the proportional symbols to link to each slider bar click
 function updatePropSymbols(map, attribute){
     map.eachLayer(function(layer){
         if (layer.feature && layer.feature.properties[attribute]){
@@ -58,6 +55,8 @@ function updatePropSymbols(map, attribute){
             //add formatted attribute to panel content string
             var year = attribute.split("_")[0];
             popupContent += "<p><b>Voter turnout in " + year + ":</b> " + props[attribute] + " percent</p>";
+			popupContent += "<p><b>Winning party in " + year + ":</b> " + props.House + " party</p>";
+
 
             //replace the layer popup
             layer.bindPopup(popupContent, {
@@ -94,6 +93,8 @@ function pointToLayer(feature, latlng, attributes){
 	
 	popupContent += "<p><b>Voter turnout in " + year + ":</b> " + feature.properties[attribute] + " percent</p>";
 	
+	popupContent += "<p><b>Winning party in " + year + ":</b> " + feature.properties.Presidential + " party</p>";
+	
 	//bind the popup to the circle marker
     layer.bindPopup(popupContent, {
 		offset: new L.point(0, -geojsonMarkerOptions.radius)
@@ -121,18 +122,21 @@ function processData(data){
 };
 	
 function createPropSymbols(data, map, attributes){
-	//adjusts the symbols for each data point to reflect its value using the calcPropRadius function results
+	//adjusts the symbols for each data point to reflect its value using the calcPropRadius function results and filters the map to only show symbols on Republican states
 	L.geoJson(data, {
 		pointToLayer: function(feature,latlng){
 			return pointToLayer(feature,latlng,attributes);
-		}
+		},
+		filter: function(feature, layer) {
+					return feature.properties.House == "Republican";
+				}
 	}).addTo(map);
 };
 
 //function to retrieve the data and place it on the map
 function getData(map){
     //load the data
-    $.ajax("data/ElectionTurnout.geojson", {
+    $.ajax("data/ElectionTurnoutParty.geojson", {
         dataType: "json",
         success: function(response){  
 			//create an attributes array
@@ -142,6 +146,7 @@ function getData(map){
 		}
     });
 };
+
 
 //calculate the radius of each proportional symbol
 function calcPropRadius(attValue) {
