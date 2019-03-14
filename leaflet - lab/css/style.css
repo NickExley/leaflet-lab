@@ -1,14 +1,44 @@
-#mapid {height: 500px; } 
-.leaflet-popup-content p {
-    margin: 0.2em 0;
-}
-#panel {
-    width: 26%;
-    padding: 20px;
+#mapid {
+    height: 400px;
+    width: 100%;
     display: inline-block;
-    vertical-align: top;
+}
+
+#Title {
+    display: block;
+	font-size: 18px;
+	font-family: "Trebuchet MS";
+	background-color: #6495ed;
+	text-align: center;
+	border: solid gray 2px;
+}
+
+#Context {
+	display: block;
+	font-size: 14px;
+	font-family: "Trebuchet MS";
+	background-color: #6495ed;
+	text-align: center;
+	border: solid gray 1px;
+}
+
+#Source {
+	display: block;
+	font-size: 14px;
+	font-family: "Trebuchet MS";
+	background-color: #6495ed;
+	text-align: center;
+	border: solid gray 1px
+}
+
+.sequence-control-container {
+    width: 500px;
+    height: 30px;
+    background-color: rgba(255,255,255,0.8);
+    padding: 10px;
+    line-height: 45px;
     text-align: center;
-    line-height: 42px;
+    border: solid gray 1px;
 }
 
 .range-slider {
@@ -21,4 +51,18 @@
 
 #reverse {
     float: left;
+}
+
+.leaflet-popup-content p {
+    margin: 0.2em 0;
+}
+
+.legend-control-container {
+    width: 125px;
+    height: 100px;
+    background-color: rgba(255,255,255,0.8);
+    padding: 8px;
+    line-height: 20px;
+    text-align: center;
+    border: solid gray 1px;
 }

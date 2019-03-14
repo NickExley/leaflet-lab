@@ -1,10 +1,14 @@
+var layerGroup;
+var currLayer;
+var layerID = [];
+
 function createSequenceControls(map,attributes){
     //create range input element (slider)
     $('#panel').append('<input class="range-slider" type="range">');
 	
 	//set slider attributes
 	$('.range-slider').attr({
-		max: 8,
+		max: 9,
 		min: 0,
 		value: 0,
 		step: 1
@@ -23,26 +27,41 @@ function createSequenceControls(map,attributes){
         if ($(this).attr('id') == 'forward'){
             index++;
             //Step 7: if past the last attribute, wrap around to first attribute
-            index = index > 8 ? 0 : index;
+            index = index > 9 ? 0 : index;
         } else if ($(this).attr('id') == 'reverse'){
             index--;
             //Step 7: if past the first attribute, wrap around to last attribute
-            index = index < 0 ? 8 : index;
+            index = index < 0 ? 9 : index;
         };
 
         //Step 8: update slider
         $('.range-slider').val(index);
 		
 		//Step 9: pass new attribute to update symbols
-        updatePropSymbols(map, attributes[index]);
+        //updatePropSymbols(map, attributes[index]);
+		
+		// display certain layer
+		
+		map.eachLayer(function (layer) {
+			map.removeLayer(layer);
+		});
+		map.addLayer(layerGroup.getLayer(index));
+    });
+	
+	$('.range-slider').on('input', function(){
+		var index = $(this).val();
+		
+		map.removeLayer(currLayer);
+		currLayer = layerGroup.getLayer(layerID[index]).addTo(map);
     });
 };
 
 //create function to update the proportional symbols to link to each slider bar click
 function updatePropSymbols(map, attribute){
-    map.eachLayer(function(layer){
+	map.eachLayer(function(layer){
         if (layer.feature && layer.feature.properties[attribute]){
-            //access feature properties
+            
+			//access feature properties
             var props = layer.feature.properties;
 
             //update each feature's radius based on new attribute values
@@ -55,21 +74,21 @@ function updatePropSymbols(map, attribute){
             //add formatted attribute to panel content string
             var year = attribute.split("_")[0];
             popupContent += "<p><b>Voter turnout in " + year + ":</b> " + props[attribute] + " percent</p>";
-			popupContent += "<p><b>Winning party in " + year + ":</b> " + props.House + " party</p>";
-
+			popupContent += "<p><b>Winning House party in " + year + ":</b> " + props.House + " party</p>";
+			popupContent += "<p><b>Winning Presidential party in " + year + ":</b> " + props.Presidential + " party</p>";
 
             //replace the layer popup
             layer.bindPopup(popupContent, {
                 offset: new L.Point(0,-radius)
+			
             });
         };
 	});
 };
 
 //create function to make the proportional symbols of a certain color, fill, opacity, etc
-function pointToLayer(feature, latlng, attributes){
-	
-	var attribute = attributes[0];
+function pointToLayer(feature, latlng, attributes, attribute){
+	//var attribute = attributes[0];
 		
 	var geojsonMarkerOptions = {
 		radius: 8,
@@ -84,6 +103,7 @@ function pointToLayer(feature, latlng, attributes){
 	geojsonMarkerOptions.radius = calcPropRadius(attValue);
 	
 	var layer = L.circleMarker(latlng, geojsonMarkerOptions);
+	//console.log(attValue);
 	
 	//build popup content string starting with city...Example 2.1 line 24
 	var popupContent = "<p><b>State:</b> " + feature.properties.State + "</p>";
@@ -93,15 +113,17 @@ function pointToLayer(feature, latlng, attributes){
 	
 	popupContent += "<p><b>Voter turnout in " + year + ":</b> " + feature.properties[attribute] + " percent</p>";
 	
-	popupContent += "<p><b>Winning party in " + year + ":</b> " + feature.properties.Presidential + " party</p>";
+	popupContent += "<p><b>Winning House party in " + year + ":</b> " + feature.properties.House0 + " party</p>";
 	
+	popupContent += "<p><b>Winning Presidential party in " + year + ":</b> " + feature.properties.Presidential0 + " party</p>";
+
 	//bind the popup to the circle marker
     layer.bindPopup(popupContent, {
 		offset: new L.point(0, -geojsonMarkerOptions.radius)
 	});
-	
-	return layer		
+	return layer
 };
+
 
 function processData(data){
     //empty array to hold attributes
@@ -123,14 +145,32 @@ function processData(data){
 	
 function createPropSymbols(data, map, attributes){
 	//adjusts the symbols for each data point to reflect its value using the calcPropRadius function results and filters the map to only show symbols on Republican states
-	L.geoJson(data, {
+	layerGroup = L.layerGroup();
+	currLayer = L.geoJson(data, {
 		pointToLayer: function(feature,latlng){
-			return pointToLayer(feature,latlng,attributes);
+			return pointToLayer(feature,latlng,attributes,attributes[0]);
 		},
-		filter: function(feature, layer) {
-					return feature.properties.House == "Republican";
-				}
-	}).addTo(map);
+/* 		filter: function(feature) {
+			return feature.properties.House == "Democrat";
+		} */
+	});
+	currLayer.addTo(map);
+
+	// create layer group
+	for (id in attributes) {
+		var l = L.geoJson(data, {
+			pointToLayer: function(feature,latlng){
+				return pointToLayer(feature,latlng,attributes,attributes[id]);
+			},
+/* 			filter: function(feature) {
+				var s = "House" + id.toString();
+				return feature.properties.s == "Democrat";
+			} */
+		});
+
+		layerGroup.addLayer(l);
+		layerID.push(layerGroup.getLayerId(l));
+	};
 };
 
 //function to retrieve the data and place it on the map
